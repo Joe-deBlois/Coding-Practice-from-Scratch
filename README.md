@@ -1,2 +1,2 @@
 # Coding-Practice-from-Scratch
-Studying various models using small datasets on paper, then extending it to code. 
+Studying various models using small datasets on paper, then extending them to code. 
