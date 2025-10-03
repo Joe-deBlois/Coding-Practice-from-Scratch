@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 y_train1 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 1]
 X_train1 = [[5.5, 4, 3.8], 
@@ -142,6 +143,22 @@ def log_reg_predict_and_evaluate(y_test, X_test, weights, bias):
             y_preds[i] = 1
     #print("predicted y values: ")
     #print(y_preds)
+
+    #plot predicted vs. actual points
+    for j in range(num_features):
+        plt.plot(X_test[j], y_test, marker = 'o', linestyle = 'solid', color = 'red') #true values
+        plt.plot(X_test[j], y_preds, marker = 'o', linestyle ='solid', color = 'blue') #predicted values
+
+        plt.title("Predicted vs. Actual Plot for Logistic Regression w.r.t. variable" + str(j))
+        plt.xlabel("variable " + str(j))
+        plt.ylabel("response value")
+
+        plt.show()
+
+
+
+
+
 
     #step 3: compute errors 
     errors = [0] * num_samples
