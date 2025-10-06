@@ -46,7 +46,7 @@ def log_reg_fit(y_train, X_train, max_iter, tol, lr):
     num_features = len(X_train[0])
     num_samples = len(y_train)
     iter = 1
-    w = [0] * num_samples
+    w = [0] * num_features
     b = 0
 
     while iter <= max_iter: 
@@ -225,17 +225,18 @@ print("Where 0 = correct, 1 = misclassification")
 ####################################################
 #region constructor method
 class LogisticRegression():
-   
+    
     def __init__(self, y_train, y_test, X_train, X_test, max_iter, tol, lr):
         self.y_train = y_train
-        self.y_test = y_test
         self.X_train = X_train
+        self.y_test = y_test
         self.X_test = X_test
         self.max_iter = max_iter
         self.tol = tol
         self.lr = lr
         self.w = None
         self.b = None
+        self.y_preds = None
     
     def raw_z_vals(self, X, w, b):
         z = [0] * len(X)
@@ -294,17 +295,89 @@ class LogisticRegression():
             b_new = b + (self.lr * grad_bias)
             
             #step 7: stopping condition met? 
-            if iter >= self.max_iter:
-                self.w = w_new
-                self.b = b_new
             #check if ALL weights and bias changed less than tol
             if all(abs(w_new[j] - w[j]) <= self.tol for j in range(num_features)) and abs(b_new - b) <= self.tol:
                 self.w = w_new
                 self.b = b_new
+                return
+            w = w_new
+            b = b_new
+            iter +=1
+        
+        self.w = w
+        self.b = b
+
+    def predict(self):
+        num_samples = len(self.X_test)
+        #step 1: raw z-values
+        z = self.raw_z_vals(self.X_test, self.w, self.b)
+        #step 2: sigmoid probabilities
+        self.y_preds = self.sigmoid(z)
+        for i in range(num_samples):
+            if self.y_preds[i] <= 0.5:
+                self.y_preds[i] = 0
+            else:
+                self.y_preds[i] = 1
+        return self.y_preds
+        return self.y_preds
+    
+    def prediction_plot(self):
+        plotted_actual = False
+        plotted_pred = False
+        num_samples = len(self.X_test)
+        num_features = len(self.X_test[0])
+
+        #plot actual & predicted values
+        for j in range(num_features):
+            for i in range(num_samples):
+                if not plotted_actual: 
+                    plt.scatter(self.X_test[i][j], self.y_test[i], marker = 'o', linestyle = 'solid', color = '#0023FF', alpha = 0.5, label = "Actual") #true values
+                    plotted_actual = True
+                else:
+                    plt.scatter(self.X_test[i][j], self.y_test[i], marker = 'o', linestyle = 'solid', color = '#0023FF', alpha = 0.5) #true values
+                if not plotted_pred:
+                    plt.scatter(self.X_test[i][j], self.y_preds[i], marker = 'o', linestyle ='solid', color = '#FF0000', alpha = 0.5, label = "Predicted") #predicted values
+                    plotted_pred = True
+                else:
+                    plt.scatter(self.X_test[i][j], self.y_preds[i], marker = 'o', linestyle ='solid', color = '#FF0000', alpha = 0.5)
+            #Generate x-values for sigmoid curve
+            #Generate 300 since we need a smooth line (denser points)
+            X_test_nparray = np.array(self.X_test)
+            x_vals = np.linspace(np.min(X_test_nparray[:, j]), np.max(X_test_nparray[:,j]), 300)
+
+            #Simulate changing one feature while keeping all others constant at their mean
+            mean_features = np.mean(self.X_test, axis = 0) #axis = 0 means "take the mean across rows, for each column/feature"
+            X_input = np.tile(mean_features, (300,1))
+            X_input[:,j] = x_vals
+
+            #Compute sigmoid curve on these 300 points using w and b 
+            sigmoid_curve = []
+            
+            #1: Compute raw z-values for X_input
+            z = self.raw_z_vals(X_input, self.w, self.b)
+            
+            #2: turn raw values into sigmoid probabilities
+            for i in range(len(X_input)):
+                sigmoid_curve.append(1/(1 + math.e ** (-z[i])))
+    
+            #plot sigmoid (probability) curve
+            plt.plot(x_vals, sigmoid_curve, color='#2DA60F', linewidth=2, label=f"Sigmoid Curve for Feature {j} (others fixed at mean)")
+        
+            plt.title(f"Predicted vs. Actual (feature{j})")
+            plt.xlabel(f"Feature {j}")
+            plt.ylabel("Response")
+            plt.legend()
+            plt.show()
+  
+    def misclassifications(self):
+        num_samples = len(self.X_test)
+        errors = [0] * num_samples
+        for i in range(num_samples):
+            if self.y_preds[i] != self.y_test[i]:
+                errors[i] = 1
             else: 
-                w = w_new
-                b = b_new
-                iter += 1
+                errors[i] = 0
+        return errors
     
 
 
@@ -312,8 +385,19 @@ logistic_model1 = LogisticRegression(y_train1, y_test1, X_train1, X_test1, max_i
 logistic_model1.fit()
 print("Weights: ", logistic_model1.w)
 print("Bias: ", logistic_model1.b)
-
-
+logistic_model1.predict()
+logistic_model1.prediction_plot()
+logistic_model1.misclassifications()
 
 
 #endregion
+
+
+
+####################################################
+#                   SANITY CHECK                   #
+####################################################
+#All should be true, since these logistic models are identical
+print(log_reg_fit1[0] == logistic_model1.w)
+print(log_reg_fit1[1] == logistic_model1.b)
+print(log_reg_predict_and_evaluate1 == logistic_model1.misclassifications())
