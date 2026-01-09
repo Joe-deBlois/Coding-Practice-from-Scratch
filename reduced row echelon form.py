@@ -1,26 +1,21 @@
 import re
+import copy
 
-# valid moves: 
-# swap rows
-# multiply a row by a nonzero scalar
-# add a multiple of one row to another
-# 
-# 
+
+#NOT WORKING CORRECTLY!!!!
+
+
 #input rules: 
 #must be a string in the form ax_1 +/- ... +/- yx_n = z
 #spaces do not matter: e.g. 4x_1 - x_2 = 4 == 4x_1-x_2=4
 
 #GOALS: get more comfortable with regex,& practice programming basic concept from scratch
 
-#equation1 = "x_1 + 2x_2 + x_3 + x_4 = 7"
-#equation2 = "x_1+2x_2+2x_3-x_4=12"
-#equation3 = "2x_1 + 4x_2 - 6x_4 = 4"
+###################################
+#           PIPELINE              #
+###################################
 
-equation1 = "2x_2 + x_3 + x_4 = 7"
-equation2 = "x_1+2x_2+2x_3-x_4=12"
-equation3 = "2x_1 + 4x_2 - 6x_4 = 4"
-
-def row_echelon_form(*args, max_dimension):
+def row_echelon_form(*args, max_dimensions):
     #format rows as numbers & put in row echelon form
     #outcome in the form A = [[a, ..., b], [c, ..., d], etc.]
     
@@ -37,8 +32,8 @@ def row_echelon_form(*args, max_dimension):
         print(elements)
        
         #step 3: isolate coefficients; set 0 for dimensions not included
-        row = [] #will have length =  max_dimension + 1
-        for i in range(1, max_dimension+1):
+        row = [] #will have length =  max_dimensions + 1
+        for i in range(1, max_dimensions +1):
                 coef = 0 
                 for element in elements[:-1]:
                     if re.search(fr'x_{i}', element):
@@ -79,95 +74,144 @@ def reduced_row_echelon_form(A, max_dimensions):
     #tuples (row, element). Max amount == max_dimensions
     
     #iterations with stopping conditions
+    
+    A_new = copy.deepcopy(A)
+    while True:
+        old_A = copy.deepcopy(A_new)
 
-    #pivot cleaning
+        # Step 1: find pivots
+        pivot_search(A_new, max_dimensions, pivots, rows)
+        print(f"Pivots: {pivots}")
+        pivot_values = []
+        for pivot in pivots: 
+            pivot_values.append(A_new[pivot[0]][pivot[1]])
+        print(f"Pivot values: {pivot_values}")
 
-def overall_pivot_search (A, max_dimensions, pivots, rows):
-    for row in range(0, rows): 
-        for element in range(0, max_dimensions):
-            #pivot in column 1
-            if (A[row][element] == 1) and element == 0:
-                check = pivot_row_search(A, max_dimensions, pivots, row, element) 
-                
-                if check != 0 :
-                    pivots.remove(check)
-                    pivots.append((row, element))
-                else: 
-                    pivots.append((row, element))
-            #any other pivot
-            if A[row][element] == 1 and all(A[row][k] == 0 for k in range(element)):
+        # Step 2: swap rows to bring pivots on top
+        swap_rule(A_new, max_dimensions, rows, pivots)
 
-                check = pivot_col_search(A, max_dimensions, pivots, row, element)
-                if check != 0:
-                    pivots.remove(check)
-                    pivots.append((row, element))
+        pivot_search(A_new, max_dimensions, pivots, rows)
+        pivot_values = []
+        for pivot in pivots: 
+            pivot_values.append(A_new[pivot[0]][pivot[1]])
+        print(f"Pivot values: {pivot_values}")
 
-def pivot_row_search(A, max_dimensions, pivots, row, element):
-    #does a pivot exist for the given column/row?
-    for pivot in pivots:
-        if pivot[0] == row:
-            return pivot
-    return 0
+        #Step 3: Forward addition rule
+        forward_addition_rule(A_new, pivots, max_dimensions, rows)
 
-def pivot_col_search(A, max_dimensions, pivots, row, element):
-    #does a pivot exist for the given column/row?
-    for pivot in pivots:
-        if pivot[1] == element:
-            return pivot
-    return 0
+        pivot_search(A_new, max_dimensions, pivots, rows)
+        pivot_values = []
+        for pivot in pivots: 
+            pivot_values.append(A_new[pivot[0]][pivot[1]])
+        print(f"Pivot values: {pivot_values}")
+
+        # Step 4: normalize pivots to 1
+        multiplication_rule(A_new, max_dimensions, rows, pivots)
+
+        pivot_search(A_new, max_dimensions, pivots, rows)
+        pivot_values = []
+        for pivot in pivots: 
+            pivot_values.append(A_new[pivot[0]][pivot[1]])
+        print(f"Pivot values: {pivot_values}")
+
+        # Step 5: Backward addition rule
+        backward_addition_rule(A_new, pivots, max_dimensions, rows)
+
+        pivot_search(A_new, max_dimensions, pivots, rows)
+        pivot_values = []
+        for pivot in pivots: 
+            pivot_values.append(A_new[pivot[0]][pivot[1]])
+        print(f"Pivot values: {pivot_values}")
+
+        if A_new == old_A:
+            break
+    return A_new
+
+
+
+
+def pivot_search(B, max_dimensions, pivots, rows, tol=1e-12):
+    pivots.clear()
+    current_row = 0
+
+    for col in range(max_dimensions):
+        pivot_row = None
+        for row in range(current_row, rows):
+            if abs(B[row][col]) > tol:  # handle floating point
+                pivot_row = row
+                break
+
+        if pivot_row is not None:
+            pivots.append((pivot_row, col))
+            current_row += 1
+            if current_row == rows:
+                break
+
        
-                
+        
+def swap_rule(C, max_dimensions, rows, pivots):
+    for i, (pivot_row, pivot_col) in enumerate(pivots):
+        if pivot_row != i:
+            C[i], C[pivot_row] = C[pivot_row], C[i]
+            pivots[i] = (i, pivot_col)
+            print(f"Swapped rows {i} and {pivot_row}")
+    return C
+    
 
+def multiplication_rule(D, max_dimensions, rows, pivots, tol = 1e-12):
+    #keep track of which pivot rows have been normalized
+    normalized_pivots = set()
 
-def swap_rule(A, max_dimensions, rows):
-    for row in range(0, rows):
-        #print(f"Row: {row}")
-        for element in range(0, max_dimensions):
+    for pivot in pivots:
+        if pivot[0] in normalized_pivots:
+            continue
+        if abs(D[pivot[0]][pivot[1]]) > tol and abs(D[pivot[0]][pivot[1]] - 1) > tol:
+            c = 1/D[pivot[0]][pivot[1]] 
+            print(f"pivot {D[pivot[0]][pivot[1]]} * c: {c} = 1")
+            print(f"Multiplied row {pivot[0]} by a factor {c}") 
+            for element_idx in range(max_dimensions + 1):
+                D[pivot[0]][element_idx] = D[pivot[0]][element_idx]*c
             
-            #print(f"Element: {element}")
-            #print(f"A[row][element]: {A[row][element]}")
-            #print(f"A[row + 1][element]: {A[row+1][element]}")
+        normalized_pivots.add(pivot[0])
+    return D
 
-            if (A[row][element] == 0) and (A[row + 1][element] == 1):
-                print(f"Swapping rows {row} and {row + 1}")
-                A[row], A[row + 1 ] = A[row + 1], A[row]
+def forward_addition_rule(E, pivots, max_dimensions, rows, tol = 1e-12):
+    for pivot_row, pivot_col in pivots:
+        for row in range(pivot_row + 1, rows):
+            factor = E[row][pivot_col]
+            if abs(factor) > tol:
+                for col in range(max_dimensions + 1):
+                    E[row][col] -= factor * E[pivot_row][col]
+                    if abs(E[row][col]) < tol:
+                        E[row][col] = 0
+                    
+    return E
 
-def multiplication_rule(A, max_dimensions, rows, pivots):
-    for row in range(0, rows):
-        for element in range(0, max_dimensions):
-            for pivot in pivots:
-                if pivot[0] == row:
-                    c = 1/A[pivot[0]][pivot[1]]
-                    for element in A[row]:
-                        A[row][element] = (A[row][element])*c
-    return A
-         
-def addition_rule(A, max_dimensions, rows, pivots):
-    for row1 in range(0, rows):
-        for row2 in range(row1+1, rows):
-        #find the corresponding element that is closest in magnitude
-            for element in range(0, max_dimensions):
-                magnitudes = () #row, magnitude difference
-                magnitudes.append(abs(A[row1][element]) - abs(A[row2][element]))
+def backward_addition_rule(F, pivots, max_dimensions, rows, tol= 1e-12):
+    for pivot_row, pivot_col in reversed(pivots):
+        for row in range(pivot_row):
+            factor = F[row][pivot_col]
+            if abs(factor) > tol:
+                for col in range(max_dimensions + 1):
+                    F[row][col] -= factor * F[pivot_row][col]
+                    if abs(F[row][col]) < tol:
+                        F[row][col] = 0
+    return F
 
-            #element is negative, add a positive
-            if A[row][element] < 0 and 
-            #element is positive, subtract a positive
-            #element is positive, add a negative
-            #element is negative, subtract a negative
-    return A
-
-
-def pivot_cleaning(A, max_dimensions, rows, pivots):
-    #last step after pivots are all found
-    for pivot in pivots: 
- 
             
 
      
-    
+#################################################
+#                    EXECUTION                  #
+#################################################
 
- 
+equation1 = "x_1 + 2x_2 + x_3 + x_4 = 7"
+equation2 = "x_1+2x_2+2x_3-x_4=12"
+equation3 = "2x_1 + 4x_2 - 6x_4 = 4"
 
-A = row_echelon_form(equation1, equation2, equation3, max_dimension = 4)
-reduced_row_echelon_form(A, 4)
+A = row_echelon_form(equation1, equation2, equation3, max_dimensions = 4)
+for row in A: 
+    print(row)
+A = reduced_row_echelon_form(A, 4)
+for row in A: 
+    print(row)
