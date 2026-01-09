@@ -1,10 +1,6 @@
 import re
 import copy
 
-
-#NOT WORKING CORRECTLY!!!!
-
-
 #input rules: 
 #must be a string in the form ax_1 +/- ... +/- yx_n = z
 #spaces do not matter: e.g. 4x_1 - x_2 = 4 == 4x_1-x_2=4
@@ -90,42 +86,47 @@ def reduced_row_echelon_form(A, max_dimensions):
         # Step 2: swap rows to bring pivots on top
         swap_rule(A_new, max_dimensions, rows, pivots)
 
-        pivot_search(A_new, max_dimensions, pivots, rows)
-        pivot_values = []
-        for pivot in pivots: 
-            pivot_values.append(A_new[pivot[0]][pivot[1]])
-        print(f"Pivot values: {pivot_values}")
+        #pivot_search(A_new, max_dimensions, pivots, rows)
+        #pivot_values = []
+        #for pivot in pivots: 
+        #    pivot_values.append(A_new[pivot[0]][pivot[1]])
+        #print(f"Pivot values: {pivot_values}")
+        
 
         #Step 3: Forward addition rule
         forward_addition_rule(A_new, pivots, max_dimensions, rows)
 
-        pivot_search(A_new, max_dimensions, pivots, rows)
-        pivot_values = []
-        for pivot in pivots: 
-            pivot_values.append(A_new[pivot[0]][pivot[1]])
-        print(f"Pivot values: {pivot_values}")
-
+        #pivot_search(A_new, max_dimensions, pivots, rows)
+        #pivot_values = []
+        #for pivot in pivots: 
+        #    pivot_values.append(A_new[pivot[0]][pivot[1]])
+        #print(f"Pivot values: {pivot_values}")
+       
         # Step 4: normalize pivots to 1
         multiplication_rule(A_new, max_dimensions, rows, pivots)
 
-        pivot_search(A_new, max_dimensions, pivots, rows)
-        pivot_values = []
-        for pivot in pivots: 
-            pivot_values.append(A_new[pivot[0]][pivot[1]])
-        print(f"Pivot values: {pivot_values}")
+        #pivot_search(A_new, max_dimensions, pivots, rows)
+        #pivot_values = []
+        #for pivot in pivots: 
+        #    pivot_values.append(A_new[pivot[0]][pivot[1]])
+        #print(f"Pivot values: {pivot_values}")
+
 
         # Step 5: Backward addition rule
         backward_addition_rule(A_new, pivots, max_dimensions, rows)
 
-        pivot_search(A_new, max_dimensions, pivots, rows)
-        pivot_values = []
-        for pivot in pivots: 
-            pivot_values.append(A_new[pivot[0]][pivot[1]])
-        print(f"Pivot values: {pivot_values}")
+        #pivot_search(A_new, max_dimensions, pivots, rows)
+        #pivot_values = []
+        #for pivot in pivots: 
+        #    pivot_values.append(A_new[pivot[0]][pivot[1]])
+        #print(f"Pivot values: {pivot_values}")
 
+        
         if A_new == old_A:
             break
     return A_new
+       
+        
 
 
 
@@ -146,9 +147,8 @@ def pivot_search(B, max_dimensions, pivots, rows, tol=1e-12):
             current_row += 1
             if current_row == rows:
                 break
+  
 
-       
-        
 def swap_rule(C, max_dimensions, rows, pivots):
     for i, (pivot_row, pivot_col) in enumerate(pivots):
         if pivot_row != i:
@@ -158,14 +158,14 @@ def swap_rule(C, max_dimensions, rows, pivots):
     return C
     
 
-def multiplication_rule(D, max_dimensions, rows, pivots, tol = 1e-12):
+def multiplication_rule(D, max_dimensions, rows, pivots):
     #keep track of which pivot rows have been normalized
     normalized_pivots = set()
 
     for pivot in pivots:
         if pivot[0] in normalized_pivots:
             continue
-        if abs(D[pivot[0]][pivot[1]]) > tol and abs(D[pivot[0]][pivot[1]] - 1) > tol:
+        if D[pivot[0]][pivot[1]] != 1 and D[pivot[0]][pivot[1]] != 0:  
             c = 1/D[pivot[0]][pivot[1]] 
             print(f"pivot {D[pivot[0]][pivot[1]]} * c: {c} = 1")
             print(f"Multiplied row {pivot[0]} by a factor {c}") 
@@ -175,28 +175,41 @@ def multiplication_rule(D, max_dimensions, rows, pivots, tol = 1e-12):
         normalized_pivots.add(pivot[0])
     return D
 
-def forward_addition_rule(E, pivots, max_dimensions, rows, tol = 1e-12):
+def forward_addition_rule(E, pivots, max_dimensions, rows):
     for pivot_row, pivot_col in pivots:
+        pivot_value = E[pivot_row][pivot_col]
         for row in range(pivot_row + 1, rows):
-            factor = E[row][pivot_col]
-            if abs(factor) > tol:
+            factor = E[row][pivot_col] / pivot_value if abs(pivot_value) > 1 else 0
+            if abs(factor) > 0:
+                print(f"\nEliminating entry E[{row},{pivot_col}] = {E[row][pivot_col]}")
+                print(f"Using pivot E[{pivot_row},{pivot_col}] = {pivot_value}")
+                print(f"Row factor: {factor}")
                 for col in range(max_dimensions + 1):
+                    old_val = E[row][col]
                     E[row][col] -= factor * E[pivot_row][col]
-                    if abs(E[row][col]) < tol:
+                    if abs(E[row][col]) < 0:
                         E[row][col] = 0
-                    
+                    print(f"  E[{row},{col}]: {old_val} - {factor}*{E[pivot_row][col]} = {E[row][col]}")
     return E
 
-def backward_addition_rule(F, pivots, max_dimensions, rows, tol= 1e-12):
+
+def backward_addition_rule(E, pivots, max_dimensions, rows):
     for pivot_row, pivot_col in reversed(pivots):
-        for row in range(pivot_row):
-            factor = F[row][pivot_col]
-            if abs(factor) > tol:
-                for col in range(max_dimensions + 1):
-                    F[row][col] -= factor * F[pivot_row][col]
-                    if abs(F[row][col]) < tol:
-                        F[row][col] = 0
-    return F
+        pivot_value = E[pivot_row][pivot_col]
+        for row in range(pivot_row - 1, -1, -1):  # rows above the pivot
+            factor = E[row][pivot_col] / pivot_value if abs(pivot_value) > 1 else 0
+            if abs(factor) > 0:
+                print(f"\nEliminating entry E[{row},{pivot_col}] = {E[row][pivot_col]}")
+                print(f"Using pivot E[{pivot_row},{pivot_col}] = {pivot_value}")
+                print(f"Row factor: {factor}")
+                for col in range(len(E[0])):  # all columns
+                    old_val = E[row][col]
+                    E[row][col] -= factor * E[pivot_row][col]
+                    if abs(E[row][col]) < 0:
+                        E[row][col] = 0
+                    print(f"  E[{row},{col}]: {old_val} - {factor}*{E[pivot_row][col]} = {E[row][col]}")
+    return E
+
 
             
 
@@ -206,8 +219,9 @@ def backward_addition_rule(F, pivots, max_dimensions, rows, tol= 1e-12):
 #################################################
 
 equation1 = "x_1 + 2x_2 + x_3 + x_4 = 7"
-equation2 = "x_1+2x_2+2x_3-x_4=12"
-equation3 = "2x_1 + 4x_2 - 6x_4 = 4"
+equation2 = "2x_1 + 4x_2 + 6x_4 = 4"
+equation3 = "x_1+2x_2+2x_3-x_4=12"
+
 
 A = row_echelon_form(equation1, equation2, equation3, max_dimensions = 4)
 for row in A: 
