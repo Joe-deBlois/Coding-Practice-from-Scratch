@@ -18,35 +18,41 @@ def row_echelon_form(*args, max_dimensions):
     A = []
 
     for arg in args:
-        #step 1: break up elements, keeping negatives
-        elements = re.split(r'[+=]|(?=[-])', arg)
+        #step 1: break up into lhs & rhs
+        lhs, rhs = arg.split('=')
+        rhs = float(rhs.replace(" ", ""))
+                    
+        #step 2: break up elements, keeping negatives
+        elements = re.split(r'[+=]|(?=[-])', lhs)
     
         #step 2: trim whitespace
         def remove_whitespace(e): 
             return e.replace(" ", "")
         elements = list(map(remove_whitespace, elements))
-        print(elements)
+        
        
         #step 3: isolate coefficients; set 0 for dimensions not included
         row = [] #will have length =  max_dimensions + 1
         for i in range(1, max_dimensions +1):
-                coef = 0 
-                for element in elements[:-1]:
-                    if re.search(fr'x_{i}', element):
-                       #then variable is present
-                       coef_string = re.match(r'^(-?\d*)', element).group(1)
+            coef = 0 
+            for element in elements[:-1]:
+                if re.search(fr'x_{i}', element):
+                    #then variable is present
+                    coef_string = re.match(r'^(-?\d*)', element).group(1)
                        
-                       if coef_string in (""):
-                            coef = 1
-                       elif coef_string in ("-"):
-                            coef = -1
-                       else:
-                            coef = float(coef_string)
+                    if coef_string in (""):
+                        coef = 1
+                    elif coef_string in ("-"):
+                        coef = -1
+                    else:
+                        coef = float(coef_string)
 
-                       break
-                row.append(coef)
+                    break
+            row.append(coef)
+            
+            
         #add the hyperplane position
-        row.append(float(elements[-1]))
+        row.append(rhs)
         A.append(row)
 
     #sanity check that all rows are the same length:
@@ -218,14 +224,41 @@ def backward_addition_rule(E, pivots, max_dimensions, rows):
 #                    EXECUTION                  #
 #################################################
 
-equation1 = "x_1 + 2x_2 + x_3 + x_4 = 7"
-equation2 = "2x_1 + 4x_2 + 6x_4 = 4"
-equation3 = "x_1+2x_2+2x_3-x_4=12"
+#equation1_1 = "x_1 + 2x_2 + x_3 + x_4 = 7"
+#equation2_1 = "2x_1 + 4x_2 + 6x_4 = 4"
+#equation3_1 = "x_1+2x_2+2x_3-x_4=12"
 
+#print("---------------------------------------------------------------------")
+#A = row_echelon_form(equation1_1, equation2_1, equation3_1, max_dimensions = 4)
+#for row in A: 
+    print(row)
+#A = reduced_row_echelon_form(A, 4)
+#for row in A: 
+    print(row)
+#print("-------------------------------------------------------------------")
 
-A = row_echelon_form(equation1, equation2, equation3, max_dimensions = 4)
-for row in A: 
+equation1_2 = "x_1 +x_2 +x_3 =3"
+equation2_2 = "x_1 +2x_2 +3x_3=0"
+equation3_2 = "x_1 + 3x_2 + 4x_3 = -2"
+
+print("---------------------------------------------------------------------")
+B = row_echelon_form(equation1_2, equation2_2, equation3_2, max_dimensions = 3)
+for row in B: 
     print(row)
-A = reduced_row_echelon_form(A, 4)
-for row in A: 
+B = reduced_row_echelon_form(B, 3)
+for row in B: 
     print(row)
+print("-------------------------------------------------------------------")
+
+equation1_3 = "x_1 +2x_2 +x_3 +x_4 = 8"
+equation2_3 = "x_1 +2x_2 + 2x+3 - x_4 = 12"
+equation3_3 = "2x_1 + 4x_2 + 6x_4 = 4"
+
+print("---------------------------------------------------------------------")
+C = row_echelon_form(equation1_3, equation2_3, equation3_3, max_dimensions = 4)
+for row in C: 
+    print(row)
+C = reduced_row_echelon_form(C, 3)
+for row in C: 
+    print(row)
+print("-------------------------------------------------------------------")
