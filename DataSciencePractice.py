@@ -3,7 +3,8 @@ import kagglehub
 import pandas as pd
 
 
-#IMPORT CHOCOLATE DATA
+#STEP 1 IMPORT CHOCOLATE DATA
+#region 
 project_dir = Path(__file__).resolve().parent
 
 #print(project_file)
@@ -32,7 +33,12 @@ if not data_path.exists():
     print("Dataset downloaded at: ", path)
 
 chocolate_df = pd.read_csv(data_path)
+#endregion
 
+#STEP 2: EDA
+#region 
 print(f"{chocolate_df.shape[0]} rows, {chocolate_df.shape[1]} vars")
 
+
+#endregion
 
