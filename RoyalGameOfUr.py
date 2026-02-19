@@ -8,15 +8,12 @@ home_zonep1 = [0, 0, 10]    #idx 1 is rosette (space 2), idx 2 scores (value 10)
 home_zonep2 = [0, 0, 10]    #idx 1 is rosette (space 2), idx 2 scores (value 10)
 
 #pieces & score
-dark = 1
-light = 1
+dark = "dark"
+light = "light"
 p1_pieces = [dark, dark, dark, dark, dark, dark, dark]
 p2_pieces = [light, light, light, light, light, light, light]
-p1_score = [0]
-p2_score = [0]
-
-#turn counter
-t = 0
+p1_score = 0
+p2_score = 0
 
 
 #passes the correct argument into the next turn
@@ -71,6 +68,46 @@ def post_move(current_player, next_player, score):
     #win-check
     if score == 7:
         print(f"Player {current_player} has won! 🎉")
+
+    #visualize the board now
+    board = [
+        [starting_zonep1[3], combat_zone[0], starting_zonep2[3]], 
+        [starting_zonep1[2], combat_zone[1], starting_zonep2[2]], 
+        [starting_zonep1[1], combat_zone[2], starting_zonep2[1]], 
+        [starting_zonep1[0], combat_zone[3], starting_zonep2[0]], 
+                        ["", combat_zone[4], ""], 
+                        ["", combat_zone[5], ""], 
+        [home_zonep1[1], combat_zone[6], home_zonep2[1]], 
+        [home_zonep1[0], combat_zone[7], home_zonep2[0]]]
+
+    board_vis = [[] for _ in range(len(board))]
+
+    for i, row in enumerate(board):
+        for space in row:
+            if space == 0:
+                board_vis[i].append("▒▒")
+            elif space == "dark":
+                board_vis[i].append("⬛")
+            elif space == "light":
+                board_vis[i].append("⬜")
+            elif space == "":
+                board_vis[i].append("  ")
+
+    #add rosettes to empty rosette spaces
+    if starting_zonep1[3] == 0:
+        board_vis[0][0] = "🟦"
+    if starting_zonep2[3] == 0: 
+        board_vis[0][2] = "🟦"
+    if combat_zone[3] == 0:
+        board_vis[3][1] = "🟦"
+    if home_zonep1[1] == 0:
+        board_vis[6][0] = "🟦"
+    if home_zonep2[1] == 0:
+        board_vis[6][2] = "🟦"
+            
+    print("board:\n")
+    for row in board_vis:
+        print(" ".join(row))
 
     #finally, change current player
     current_player = next_player
