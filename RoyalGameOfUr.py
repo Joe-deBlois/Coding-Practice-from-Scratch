@@ -1,3 +1,7 @@
+#royal game of Ur, Finkel Rules
+#https://royalur.net/rules
+
+
 import random
 
 #define zones of the board
@@ -37,7 +41,7 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score, color,
     print(f"Roll: {roll}")
 
     #if no pieces on board for current player, place one
-    if 0 not in player_pieces:
+    if 0 not in player_pieces and roll != 0:
         print("No pieces on board. Placing one.")
         starting_zone[roll-1] = color
         player_pieces[0] = 0
@@ -48,12 +52,61 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score, color,
         else: #else, on to next player's turn
             post_move(current_player, next_player, score)
     
-    #for all pieces that can move, ask for user input on which to move
-    #write moves first, then designate them to their own fucntions that the user can choose from. 
+    # for all pieces that can move, ask for user input on which to move
+    # write moves first, then designate them to their own fucntions that the user can choose from.
+    # if opponent is on rosetta, they're safe 
+    #determine legal possible moves
+    #list of start space, start desc, end space, end desc, capture (T/F), land on rosette (T/F)
+    possible_moves = []
+
+    print("determining possible moves")
+
+    ##### movement & capture of pieces already on board #####
+    #indices for pieces in starting zone (if any)
+    #list of positions
+    if roll != 0:
+        sz_pieces = [(idx + 1) for idx, space in enumerate(starting_zone) if space == color]
+        for idx in sz_pieces: 
+            #if movement would go into combat zone
+            if (idx + roll) > len(starting_zone):
+                #if the player does not have a piece there
+                if combat_zone[idx + roll - len(starting_zone) -1] != color:
+                    #if enemy has a piece there
+                    if combat_zone[idx + roll - len(starting_zone) -1] != 0:
+                        possible_moves.append([starting_zone[idx - 1], f"Starting zone space {idx}", combat_zone[idx + roll - len(starting_zone) -1], f"Combat zone space {idx + roll - len(starting_zone)}", True, False])
+                    #if enemy does not have piece there
+                    else: 
+                        #if rosette
+                        if (idx + roll - len(starting_zone) -1) == 3: 
+                            possible_moves.append([starting_zone[idx - 1], f"Starting zone space {idx}", combat_zone[idx + roll - len(starting_zone) -1], f"Combat zone space {idx + roll - len(starting_zone)}", False, True])
+                        #if not rosette
+                        else: 
+                            possible_moves.append([starting_zone[idx - 1], f"Starting zone space {idx}", combat_zone[idx + roll - len(starting_zone) -1], f"Combat zone space {idx + roll - len(starting_zone)}", False, False])
+            #if movement would stay in starting zone
+            else:
+                #if not a piece there already
+                if starting_zone[idx + roll] == 0:
+                    #if space is rosette: 
+                    if (idx + roll) == 4:
+                        possible_moves.append([starting_zone[idx - 1], f"Starting zone space {idx}", starting_zone[idx + roll - 1], f"Starting zone space {idx + roll}", False, True])
+                    #if space is not rosette
+                    else:
+                        possible_moves.append([starting_zone[idx - 1],f"Starting zone space {idx}", starting_zone[idx + roll - 1],f"Starting zone space {idx + roll}", False, False])
+    
+
+    #####introduce a new piece#####
+
+    #####list moves #####
+    print("displaying possible moves...")
+    if len(possible_moves) == 0: 
+        print("No possible moves; skip this turn.")
+    else: 
+        print("Possible moves: ")
+        for move in possible_moves: 
+            print(f"{move[1]} to {move[3]}")
 
 
-
-    #scoring conditions
+    #####scoring conditions#####
     #if in combat_zone
     if combat_zone[-1] == color and roll == 4:
         score += 1
