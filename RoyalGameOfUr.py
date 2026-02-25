@@ -243,7 +243,7 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                             "capture": False, 
                             "rosette": True, 
                             "from_desc": "place piece", 
-                            "to_desc": "starting zone space {roll}"})
+                            "to_desc": f"starting zone space {roll}"})
 
                 else: 
                     possible_moves.append(
@@ -268,7 +268,8 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
             counter += 1
 
     #####player chooses move#####
-    user_input = input("What is your choice?")
+    user_input = input("What is your choice? ")
+    print("\n")
     player_choice = possible_moves[int(user_input)]
 
     #calibrate variables from player choice#
