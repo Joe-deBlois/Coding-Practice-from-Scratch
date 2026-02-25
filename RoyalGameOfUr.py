@@ -16,9 +16,7 @@ dark = "dark"
 light = "light"
 p1_pieces = [dark, dark, dark, dark, dark, dark, dark]
 p2_pieces = [light, light, light, light, light, light, light]
-p1_score = 0
-p2_score = 0
-
+score_vals = {1: 0, 2: 0}
 
 #passes the correct argument into the next turn
 def calibrate_turn_variables(current_player):
@@ -26,15 +24,15 @@ def calibrate_turn_variables(current_player):
     print(f"\ncalibrating turn parameters for player {current_player}\n")
     
     if current_player == 1:
-        return turn(starting_zonep1, home_zonep1, p1_pieces, p2_pieces, p1_score, dark, light, 2, 1)
+        return turn(starting_zonep1, home_zonep1, p1_pieces, p2_pieces, score_vals, dark, light, 2, 1)
     else:
-        return turn(starting_zonep2, home_zonep2, p2_pieces, p1_pieces, p2_score, light, dark, 1, 2)
+        return turn(starting_zonep2, home_zonep2, p2_pieces, p1_pieces, score_vals, light, dark, 1, 2)
 
              
 #all possible moves and steps for a turn
-def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score, color, opp_color, next_player, current_player):
+def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, color, opp_color, next_player, current_player):
 
-    print(f"starting turn for player {current_player}")
+    print(f"It is {current_player}'s turn\n__________________________________________")
 
     #1) roll die: random choice between 0 and 4
     roll = random.choices(
@@ -51,9 +49,9 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score, color,
         print(f"Player {current_player} pieces: {player_pieces}")
         if  (roll) == 4: #if landed on rosette, go again
             print(f"Landed on rosette. Player {current_player} goes again.")
-            return {"score": score, "next_player": current_player}
+            return post_move(current_player, current_player, score_vals)
         else: #else, on to next player's turn
-            return {"score" : score, "next_player":next_player}
+            return post_move(current_player, next_player, score_vals)
     
     # for all pieces that can move, ask for user input on which to move
     # write moves first, then designate them to their own fucntions that the user can choose from.
@@ -259,13 +257,12 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score, color,
                             "to_desc": f"starting zone space {roll}"})
 
     #####list moves #####
-    print("displaying possible moves...")
     counter = 0
     if len(possible_moves) == 0: 
         print("No possible moves; skip this turn.")
-        return post_move(current_player, next_player, score)
+        return post_move(current_player, next_player, score_vals)
     else: 
-        print("Possible moves: ")
+        print("\nPossible moves: \n- - - - - - - - - - - - - - - - - - - - - -")
         for move in possible_moves: 
             print(f"{counter}\t{move['from_desc']} to {move['to_desc']}")
             counter += 1
@@ -286,22 +283,28 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score, color,
 
     #1. score
     if player_choice["to_idx"] == "score":
-        score +=1
+        print("updating score...")
+        score_vals[current_player] +=1
     #2. move
     if player_choice["to_idx"] != "score":
+        print("moving player...")
         to_zone[to_index] = color
+        
 
     #3. "delete" old piece
     if player_choice["from_zone"] == "place piece":
+        print("placing piece on board...")
         #select a piece to enter the board
         piece_idx = next((p for p, q in enumerate(player_pieces) if p != 0), None)
         player_pieces[piece_idx] = 0
         
     if player_choice["from_zone"] != "place piece":
+        print("deleting old piece location...")
         from_zone[from_index] = 0
     
     #4. capture
     if player_choice["capture"] == True:
+        print("capturing opponent piece...")
         combat_zone[to_index] = color
         #choose an opponent's piece slot to be refilled
         captured_index = next((i for i, v in enumerate(opponent_pieces) if v == 0), None)
@@ -312,7 +315,8 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score, color,
     if player_choice["rosette"] == True: 
         print(f"Landed on rosette. Player {current_player} goes again.")
         #player goes again
-        return ({"score": score, "next_player": current_player})
+        return post_move(current_player, current_player, score_vals)
+    return post_move(current_player, next_player, score_vals)
 
 
 def get_zone(zone_name, starting_zone, home_zone, combat_zone): 
@@ -328,10 +332,10 @@ def get_zone(zone_name, starting_zone, home_zone, combat_zone):
         return "place piece"
   
     
-def post_move(current_player, next_player, score):
+def post_move(current_player, next_player, score_vals):
     #win-check
-    if score == 7:
-        print(f"Player {current_player} has won! 🎉")
+    if score_vals[current_player] >= 7:
+        print(f"- - - - - - - - - - - -- - - -\n\nPlayer {current_player} has won! 🎉\n\n- - - - - - - - - - - -- - - -")
 
     #visualize the board now
     board = [
@@ -375,23 +379,11 @@ def post_move(current_player, next_player, score):
 
     #finally, change current player
     print(f"Turn concluded. Next player is {next_player}")
-    return ({"score": score, "next_player": next_player})
+    return calibrate_turn_variables(next_player)
    
 
-#initialize game: choose who rolls first
+#initialize game: choose who rolls first & begin their move
 current_player = random.randint(1, 2)
 print(f"Player {current_player} goes first")
-while p1_score < 7 and p2_score < 7:
-    result = calibrate_turn_variables(current_player)
+calibrate_turn_variables(current_player)
     
-    # Update scores
-    if result is not None:
-        if current_player == 1:
-            p1_score = result["score"]
-        else:
-            p2_score = result["score"]
-
-    # Determine next player
-    current_player = result["next_player"]
-
-
