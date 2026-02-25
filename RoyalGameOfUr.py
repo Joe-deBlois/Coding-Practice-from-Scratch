@@ -21,7 +21,7 @@ score_vals = {1: 0, 2: 0}
 #passes the correct argument into the next turn
 def calibrate_turn_variables(current_player):
 
-    print(f"\ncalibrating turn parameters for player {current_player}\n")
+    #print(f"\ncalibrating turn parameters for player {current_player}\n")
     
     if current_player == 1:
         return turn(starting_zonep1, home_zonep1, p1_pieces, p2_pieces, score_vals, dark, light, 2, 1)
@@ -60,8 +60,6 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
     #list of dictionaries.
     #keys are "from_zone", "from_idx", "to_zone", "to_idx", "capture", "rosette", "score", "from_desc", "to_desc"
     possible_moves = []
-
-    print("Determining possible moves...")
 
     ##### movement & capture of pieces already on board #####
    
@@ -200,7 +198,7 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                             "capture": False, 
                             "rosette": False, 
                             "from_desc": f"combat zone space {space}", 
-                            "to_desc": f"home zone space {space + roll}"})
+                            "to_desc": f"combat zone space {space + roll}"})
     
         ###home zone###
         hz_pieces = [(idx + 1) for idx, space in enumerate(home_zone) if space == color]
