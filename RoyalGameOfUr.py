@@ -3,17 +3,19 @@
 
 
 import random
+import sys
 
 #define zones of the board
 starting_zonep1 = [0, 0, 0, 0] #idx 3 is rosette, space 4
 starting_zonep2 = [0, 0, 0, 0] #idx 3 is rosette, space 4
 combat_zone = [0, 0, 0, 0, 0, 0, 0, 0] #idx 3 is rosette, space 4
 home_zonep1 = [0, 0, 10]    #idx 1 is rosette (space 2), idx 2 scores (value 10)
-home_zonep2 = [0, 0, 10, 3, 3, 3, 3]    #idx 1 is rosette (space 2), idx 2 scores (value 10)
+home_zonep2 = [0, 0, 10]    #idx 1 is rosette (space 2), idx 2 scores (value 10)
 
 #pieces & score
 dark = "dark"
 light = "light"
+
 p1_pieces = [dark, dark, dark, dark, dark, dark, dark]
 p2_pieces = [light, light, light, light, light, light, light]
 score_vals = {1: 0, 2: 0}
@@ -43,12 +45,11 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
 
     #if no pieces on board for current player, place one
     if 0 not in player_pieces and roll != 0:
-        print("No pieces on board. Placing one.")
+        input("No pieces on board. Placing one.\tClick enter.")
         starting_zone[roll-1] = color
         player_pieces[0] = 0
-        print(f"Player {current_player} pieces: {player_pieces}")
         if  (roll) == 4: #if landed on rosette, go again
-            print(f"Landed on rosette. Player {current_player} goes again.")
+            input(f"Landed on rosette. Player {current_player} goes again.\tClick enter.")
             return post_move(current_player, current_player, score_vals)
         else: #else, on to next player's turn
             return post_move(current_player, next_player, score_vals)
@@ -136,13 +137,15 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
         ###combat zone###
         cz_pieces = [(idx + 1) for idx, space in enumerate(combat_zone) if space == color]
         for space in cz_pieces: 
-            #if movement would go into home zone
-            if (space + roll) > len(combat_zone):
-                #if the player does not have a piece there
-                if home_zone[space + roll - len(combat_zone) -1] != color:
-                    #if score
-                    if (space + roll - len(combat_zone)) == 10: 
-                            possible_moves.append(
+            #if movement would go outside combat zone
+            if ((space + roll) > len(combat_zone)):
+                #if movement would fall in home zone
+                if (space + roll - len(combat_zone) <= len(home_zone)):
+                    #if the player does not have a piece there
+                    if home_zone[space + roll - len(combat_zone) -1] != color:
+                        #if score
+                        if home_zone[space + roll - len(combat_zone) -1] == 10: 
+                                possible_moves.append(
                             {"from_zone" : "combat",
                             "from_idx" : space - 1, 
                             "to_zone" : "score", 
@@ -151,27 +154,27 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                             "rosette": False, 
                             "from_desc": f"combat zone space {space}", 
                             "to_desc": "score"})
-                    else: 
-                        if (space + roll - len(combat_zone)) == 2:
-                            possible_moves.append(
-                            {"from_zone" : "combat",
-                            "from_idx" : space - 1, 
-                            "to_zone" : "home", 
-                            "to_idx" : 1, 
-                            "capture": False, 
-                            "rosette": True, 
-                            "from_desc": f"combat zone space {space}", 
-                            "to_desc": "home zone space 2"})
                         else: 
-                             possible_moves.append(
-                            {"from_zone" : "combat",
-                            "from_idx" : space - 1, 
-                            "to_zone" : "home", 
-                            "to_idx" : 0, 
-                            "capture": False, 
-                            "rosette": False, 
-                            "from_desc": f"combat zone space {space}", 
-                            "to_desc": "home zone space 1"})
+                            if space + roll - len(combat_zone) == 1:
+                                possible_moves.append(
+                                {"from_zone" : "combat",
+                                "from_idx" : space - 1, 
+                                "to_zone" : "home", 
+                                "to_idx" : space + roll - len(combat_zone)-1, 
+                                "capture": False, 
+                                "rosette": False, 
+                                "from_desc": f"combat zone space {space}", 
+                                "to_desc": f"home zone space {space + roll - len(combat_zone)}"})
+                            if space + roll - len(combat_zone) == 2: 
+                                possible_moves.append(
+                                {"from_zone" : "combat",
+                                "from_idx" : space - 1, 
+                                "to_zone" : "home", 
+                                "to_idx" : space + roll - len(combat_zone)-1, 
+                                "capture": False, 
+                                "rosette": True, 
+                                "from_desc": f"combat zone space {space}", 
+                                "to_desc": f"home zone space {space + roll - len(combat_zone)}"})
 
             #if movement would stay in combat zone
             else:
@@ -187,7 +190,7 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                             "capture": False, 
                             "rosette": True, 
                             "from_desc": f"combat zone space {space}", 
-                            "to_desc": f"home zone space {space + roll}"})
+                            "to_desc": f"combat zone space {space + roll}"})
                     #if space is not rosette
                     else:
                         possible_moves.append(
@@ -199,13 +202,25 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                             "rosette": False, 
                             "from_desc": f"combat zone space {space}", 
                             "to_desc": f"combat zone space {space + roll}"})
+                #if opponent piece is there & can be taken
+                if combat_zone[space + roll -1] == opp_color and (space + roll) != 4:
+                    possible_moves.append(
+                            {"from_zone" : "combat",
+                            "from_idx" : space - 1, 
+                            "to_zone" : "combat", 
+                            "to_idx" : space + roll - 1, 
+                            "capture": True, 
+                            "rosette": False, 
+                            "from_desc": f"combat zone space {space}", 
+                            "to_desc": f"combat zone space {space + roll}"})
     
         ###home zone###
         hz_pieces = [(idx + 1) for idx, space in enumerate(home_zone) if space == color]
         for space in hz_pieces: 
-            #if piece can score
-            if home_zone[space + roll] == 10:
-                possible_moves.append(
+            if (roll + space) <= len(home_zone):
+                #if piece can score
+                if home_zone[space + roll -1 ] == 10:
+                    possible_moves.append(
                             {"from_zone" : "home",
                             "from_idx" : space - 1, 
                             "to_zone" : "score", 
@@ -214,10 +229,10 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                             "rosette": False, 
                             "from_desc": f"home zone space {space}", 
                             "to_desc": "score"})
-            else: 
-                #if already in home, only other open space must be rosette
-                if home_zone[space + roll - 1] == 0: 
-                    possible_moves.append(
+                else: 
+                    #if already in home & not scoring, only other open space must be rosette
+                    if home_zone[space + roll - 1] == 0: 
+                        possible_moves.append(
                             {"from_zone" : "home",
                             "from_idx" : space - 1, 
                             "to_zone" : "home", 
@@ -228,12 +243,18 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                             "to_desc": f"home zone space {space + roll}"})
 
         #####introduce a new piece#####
-        if starting_zone[roll - 1] == 0: 
-            #if space is free
+        #if player still has pieces to introduce
+        num_pieces = 0
+        for p in player_pieces: 
+            if p == color:
+                num_pieces +=1
+        if num_pieces > 0: 
             if starting_zone[roll - 1] == 0: 
-                #if rosette
-                if roll == 4: 
-                    possible_moves.append(
+                #if space is free
+                if starting_zone[roll - 1] == 0: 
+                    #if rosette
+                    if roll == 4: 
+                        possible_moves.append(
                             {"from_zone" : "place piece",
                             "from_idx" : "place piece", 
                             "to_zone" : "starting", 
@@ -243,8 +264,8 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                             "from_desc": "place piece", 
                             "to_desc": f"starting zone space {roll}"})
 
-                else: 
-                    possible_moves.append(
+                    else: 
+                        possible_moves.append(
                             {"from_zone" : "place piece",
                             "from_idx" : "place piece", 
                             "to_zone" : "starting", 
@@ -257,7 +278,7 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
     #####list moves #####
     counter = 0
     if len(possible_moves) == 0: 
-        print("No possible moves; skip this turn.")
+        input("No possible moves; skip this turn.\tClick enter.")
         return post_move(current_player, next_player, score_vals)
     else: 
         print("\nPossible moves: \n- - - - - - - - - - - - - - - - - - - - - -")
@@ -265,10 +286,14 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
             print(f"{counter}\t{move['from_desc']} to {move['to_desc']}")
             counter += 1
 
-    #####player chooses move#####
+    #####player chooses move#####0
+
     user_input = input("What is your choice? ")
+    while user_input not in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
+        user_input = input("What is your choice? ")
     print("\n")
     player_choice = possible_moves[int(user_input)]
+
 
     #calibrate variables from player choice#
 
@@ -282,28 +307,25 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
 
     #1. score
     if player_choice["to_idx"] == "score":
-        print("updating score...")
         score_vals[current_player] +=1
     #2. move
     if player_choice["to_idx"] != "score":
-        print("moving player...")
         to_zone[to_index] = color
         
 
     #3. "delete" old piece
     if player_choice["from_zone"] == "place piece":
-        print("placing piece on board...")
         #select a piece to enter the board
-        piece_idx = next((p for p, q in enumerate(player_pieces) if p != 0), None)
+        piece_idx = next((p for p, q in enumerate(player_pieces) if q != 0), None)
         player_pieces[piece_idx] = 0
         
     if player_choice["from_zone"] != "place piece":
-        print("deleting old piece location...")
         from_zone[from_index] = 0
     
+
+
     #4. capture
     if player_choice["capture"] == True:
-        print("capturing opponent piece...")
         combat_zone[to_index] = color
         #choose an opponent's piece slot to be refilled
         captured_index = next((i for i, v in enumerate(opponent_pieces) if v == 0), None)
@@ -312,7 +334,7 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
 
     #4. rosette 
     if player_choice["rosette"] == True: 
-        print(f"Landed on rosette. Player {current_player} goes again.")
+        input(f"Landed on rosette. Player {current_player} goes again.\tClick enter.")
         #player goes again
         return post_move(current_player, current_player, score_vals)
     return post_move(current_player, next_player, score_vals)
@@ -334,7 +356,9 @@ def get_zone(zone_name, starting_zone, home_zone, combat_zone):
 def post_move(current_player, next_player, score_vals):
     #win-check
     if score_vals[current_player] >= 7:
-        print(f"- - - - - - - - - - - -- - - -\n\nPlayer {current_player} has won! 🎉\n\n- - - - - - - - - - - -- - - -")
+        winning_condition_met(current_player)
+    if score_vals[next_player] >= 7:
+        winning_condition_met(next_player)
 
     #visualize the board now
     board = [
@@ -372,13 +396,20 @@ def post_move(current_player, next_player, score_vals):
     if home_zonep2[1] == 0:
         board_vis[6][2] = "🟦"
             
-    print("board:\n")
+    print("\nboard:\n")
     for row in board_vis:
         print(" ".join(row))
+
+    global p1_pieces, p2_pieces
+    print(f"\n\tp1 score: {score_vals[1]}\tp1 pieces: {p1_pieces.count("dark")}\n\tp2 score: {score_vals[2]}\tp2 pieces: {p2_pieces.count("light")}")
 
     #finally, change current player
     print(f"Turn concluded. Next player is {next_player}")
     return calibrate_turn_variables(next_player)
+
+def winning_condition_met(winner):
+    print(f"- - - - - - - - - - - -- - - -\n\nPlayer {winner} has won! 🎉\n\n- - - - - - - - - - - - - - - -")
+    sys.exit()
    
 
 #initialize game: choose who rolls first & begin their move
