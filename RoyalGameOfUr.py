@@ -73,7 +73,7 @@ def turn(starting_zone, home_zone, player_pieces, opponent_pieces, score_vals, c
                 #if the player does not have a piece there
                 if combat_zone[space + roll - len(starting_zone) -1] != color:
                     #if enemy has a piece there
-                    if combat_zone[space + roll - len(starting_zone) -1] != 0:
+                    if combat_zone[space + roll - len(starting_zone) -1] != 0 and (space + roll - len(home_zone)) != 4:
                         possible_moves.append(
                             {"from_zone" : "starting",
                             "from_idx" : space - 1, 
